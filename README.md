@@ -145,7 +145,8 @@ faro/
 │   │   └── app.ts               # Vanilla TS console, served transpiled as /app.js
 │   └── server.ts                # Express wiring, /app.js compile, graceful shutdown
 ├── tests/
-│   └── domain.test.ts           # Vitest unit suite for the domain rules
+│   ├── domain.test.ts           # Vitest unit suite for the domain rules
+│   └── api.test.ts              # REST integration suite (supertest + in-memory SQLite)
 ├── package.json
 ├── tsconfig.json
 └── README.md
@@ -164,18 +165,26 @@ faro/
 | `npm start` | `tsx src/server.ts` | Run once, no watch |
 | `npm run build` | `tsc` | Type-check and emit to `dist/` |
 | `npm run typecheck` | `tsc --noEmit` | Types only, no output |
-| `npm test` | `vitest run` | Domain unit suite |
+| `npm test` | `vitest run` | Domain + API integration suites |
 | `npm run test:coverage` | `vitest run --coverage` | Suite with V8 coverage |
 
 `SIGINT`/`SIGTERM` trigger a graceful shutdown (close server → close database). With `NODE_ENV=production` the transpiled dashboard script is compiled once and cached.
 
 ## Testing
 
-`npm test` runs the Vitest suite in `tests/domain.test.ts` — the engine's invariants as fast, I/O-free unit tests:
+`npm test` runs two Vitest suites — 52 tests in total: the domain invariants as fast, I/O-free unit tests, and a REST integration suite that drives the real Express app through supertest against a seeded in-memory SQLite ledger.
+
+The domain suite (`tests/domain.test.ts`) covers the engine's rules:
 
 - **Money:** negative, non-integer and non-finite amounts and unsupported currencies rejected; half-up rounding (`1234.567` → `123457` minor); mixed-currency arithmetic refused.
 - **Due dates:** day 31 clamps to `2026-02-28`, `2028-02-29` (leap year) and `2026-04-30`; invalid month/day inputs rejected.
 - **Lifecycle:** all five statuses verified through payment + confirmation sequences; overpayment rejected citing the exact remaining balance (`850000.50`); zero amounts, blank references and currency mismatches rejected; new payments blocked while `PENDING_VERIFICATION` (`ConflictError`); double confirmation and unknown payment ids raise conflict/not-found.
+
+The API suite (`tests/api.test.ts`) exercises every endpoint and its failure paths over real HTTP:
+
+- **Lifecycle over HTTP:** generate a future period, record a half payment → `PARTIAL`, record the rest → `PENDING_VERIFICATION` (any further payment → 409), confirm both receipts → `PAID`; re-confirmation → 409, unknown charge/payment ids → 404.
+- **Validation at the edge:** malformed JSON bodies, invalid periods/statuses/currencies and overpayments all come back through the single `{ error: { code, message } }` envelope with the documented status codes.
+- **Time-independent by design:** date-sensitive scenarios are built on charges generated ~40 days ahead, whose due dates always lie in the future — the suites pass no matter which day they run.
 
 ## Design decisions
 
