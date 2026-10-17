@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#0f6b5c" />
+    <title>Faro — Lease Ledger</title>
+    <meta
+      name="description"
+      content="Faro reconciles lease charges against recorded receipts: billing, partial payments and receipt confirmation in one ledger."
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span class="brand-text">
+          <span class="brand-name">Faro</span>
+          <span class="brand-sub">Lease Ledger</span>
+        </span>
+      </div>
+
+      <form class="generate" id="generate-form" novalidate>
+        <div class="field field--inline">
+          <label class="field-label" for="generate-period">Billing period</label>
+          <input
+            id="generate-period"
+            name="period"
+            type="text"
+            inputmode="numeric"
+            placeholder="2026-11"
+            pattern="\d{4}-(0[1-9]|1[0-2])"
+            autocomplete="off"
+            spellcheck="false"
+            aria-describedby="generate-hint"
+            required
+          />
+        </div>
+        <button class="btn btn-primary" type="submit" id="generate-submit">Generate charges</button>
+        <p class="hint" id="generate-hint">Format YYYY-MM · one charge per active lease</p>
+      </form>
+    </header>
+
+    <main id="main">
+      <section class="panel snapshot" aria-labelledby="snapshot-title">
+        <div class="section-head">
+          <h2 class="section-title" id="snapshot-title">Portfolio snapshot</h2>
+          <p class="section-note" id="summary-status" role="status"></p>
+        </div>
+
+        <div class="kpi-grid" id="kpi-grid">
+          <article class="kpi">
+            <p class="kpi-label">Expected</p>
+            <p class="kpi-value num" id="kpi-expected">—</p>
+            <p class="kpi-sub">Billed across the matching charges</p>
+          </article>
+          <article class="kpi">
+            <p class="kpi-label">Collected</p>
+            <p class="kpi-value num" id="kpi-collected">—</p>
+            <p class="kpi-sub">Receipts confirmed and applied</p>
+          </article>
+          <article class="kpi">
+            <p class="kpi-label">Pending verification</p>
+            <p class="kpi-value num" id="kpi-pending">—</p>
+            <p class="kpi-sub">Receipts waiting for your approval</p>
+          </article>
+          <article class="kpi kpi--alert">
+            <p class="kpi-label">Overdue</p>
+            <p class="kpi-value num" id="kpi-overdue">—</p>
+            <p class="kpi-sub">Past the due date and still unpaid</p>
+          </article>
+          <article class="kpi kpi--rate">
+            <p class="kpi-label">Collection rate</p>
+            <p class="kpi-value num" id="kpi-rate">—</p>
+            <div class="meter" id="kpi-rate-meter" role="img" aria-label="Collection rate against billed amount">
+              <span id="kpi-rate-fill"></span>
+            </div>
+            <p class="kpi-sub" id="kpi-rate-sub">Collected over expected</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel ledger" aria-labelledby="ledger-title">
+        <div class="section-head">
+          <h2 class="section-title" id="ledger-title">Charges</h2>
+          <div class="filters">
+            <div class="field field--inline">
+              <label class="field-label" for="filter-status">Status</label>
+              <select id="filter-status">
+                <option value="">All statuses</option>
+                <option value="PENDING">Pending</option>
+                <option value="PARTIAL">Partial</option>
+                <option value="PENDING_VERIFICATION">Pending verification</option>
+                <option value="PAID">Paid</option>
+                <option value="OVERDUE">Overdue</option>
+              </select>
+            </div>
+            <div class="field field--inline">
+              <label class="field-label" for="filter-period">Period</label>
+              <input
+                id="filter-period"
+                name="period"
+                type="text"
+                inputmode="numeric"
+                placeholder="2026-11"
+                pattern="\d{4}-(0[1-9]|1[0-2])"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
+            <button class="btn btn-ghost" type="button" id="filter-reset">Reset</button>
+          </div>
+        </div>
+
+        <p class="table-note" id="charges-note" role="status"></p>
+
+        <div class="table-scroll">
+          <table class="data-table" id="charges-table">
+            <caption class="sr-only">Lease charges matching the selected status and period filters</caption>
+            <thead>
+              <tr>
+                <th scope="col">Property / Tenant</th>
+                <th scope="col" class="num">Period</th>
+                <th scope="col" class="num">Expected</th>
+                <th scope="col" class="num">Paid</th>
+                <th scope="col" class="num">Remaining</th>
+                <th scope="col">Due date</th>
+                <th scope="col">Status</th>
+                <th scope="col" class="cell-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="charges-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel contracts" aria-labelledby="contracts-title">
+        <div class="section-head">
+          <h2 class="section-title" id="contracts-title">Leases</h2>
+          <p class="section-note" id="contracts-status" role="status"></p>
+        </div>
+
+        <div class="table-scroll">
+          <table class="data-table data-table--compact" id="contracts-table">
+            <caption class="sr-only">Every lease under management with its billing cadence and overdue exposure</caption>
+            <thead>
+              <tr>
+                <th scope="col">Property / Tenant</th>
+                <th scope="col" class="num">Monthly rent</th>
+                <th scope="col" class="num">Payment day</th>
+                <th scope="col">Start date</th>
+                <th scope="col" class="num">Charges</th>
+                <th scope="col">Overdue</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody id="contracts-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span class="health" id="health-indicator" role="status">Connecting to the ledger…</span>
+      <span class="footer-note">
+        Faro records what tenants paid, holds unverified receipts for review, and keeps overdue balances visible.
+      </span>
+    </footer>
+
+    <div class="toasts" id="toasts" aria-live="polite" aria-relevant="additions"></div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
