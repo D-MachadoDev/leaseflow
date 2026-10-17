@@ -1,5 +1,5 @@
 /**
- * Faro — Lease Ledger console.
+ * LeaseFlow — Lease Ledger console.
  * Plain browser module: no imports/exports — the server transpiles this exact
  * file and serves it as /app.js.
  */

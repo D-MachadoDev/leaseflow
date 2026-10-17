@@ -1,6 +1,6 @@
-# Faro — rental lease billing & payment reconciliation engine
+# LeaseFlow — rental lease billing & payment reconciliation engine
 
-Faro is the ledger I wish I had when rent collection lived in a WhatsApp thread and a spreadsheet. It bills every active lease once per period, records partial payments (*abonos*) against a specific charge, holds transfer receipts until a human confirms them, and keeps overdue balances in plain sight — with money arithmetic that never drifts and due dates that survive short months. It is built for the way independent landlords across Latin America actually operate, and it runs as a single Node process: Express 4 over the built-in `node:sqlite`, one embedded database file, and a vanilla TypeScript dashboard. No native builds, no external services.
+LeaseFlow is the ledger I wish I had when rent collection lived in a WhatsApp thread and a spreadsheet. It bills every active lease once per period, records partial payments (*abonos*) against a specific charge, holds transfer receipts until a human confirms them, and keeps overdue balances in plain sight — with money arithmetic that never drifts and due dates that survive short months. It is built for the way independent landlords across Latin America actually operate, and it runs as a single Node process: Express 4 over the built-in `node:sqlite`, one embedded database file, and a vanilla TypeScript dashboard. No native builds, no external services.
 
 ## Quick start
 
@@ -11,11 +11,11 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:3000>. On first run the server creates `faro.db` in the working directory, applies the schema (WAL journal mode, foreign keys enforced), and seeds a demo ledger: four leases with whole-peso COP rents, charges across two billing periods, and a payment history that surfaces every status the engine can report — including a lease billed on day 31 so end-of-month clamping is visible. Delete `faro.db` (and its `-wal`/`-shm` siblings) to start from a clean slate; seeding is idempotent and never duplicates an existing ledger.
+Open <http://localhost:3000>. On first run the server creates `leaseflow.db` in the working directory, applies the schema (WAL journal mode, foreign keys enforced), and seeds a demo ledger: four leases with whole-peso COP rents, charges across two billing periods, and a payment history that surfaces every status the engine can report — including a lease billed on day 31 so end-of-month clamping is visible. Delete `leaseflow.db` (and its `-wal`/`-shm` siblings) to start from a clean slate; seeding is idempotent and never duplicates an existing ledger.
 
 ## What it solves
 
-I built Faro around the three failure modes that break spreadsheet-based rent collection:
+I built LeaseFlow around the three failure modes that break spreadsheet-based rent collection:
 
 - **Uncontrolled partial payments.** Tenants pay in two or three transfers a month and the real balance gets lost. Here every payment is attached to one charge, and confirmed vs. awaiting-confirmation money and the exact remaining balance are recomputed on every read. A payment that would overpay the charge is rejected outright, with the remaining balance in the error message.
 - **Unverified bank receipts.** A transfer screenshot is not money in the bank. Payments land as `PENDING_CONFIRMATION` and only count as collected once you approve the receipt. A charge fully covered by unconfirmed receipts is `PENDING_VERIFICATION` — and locked against new payments (409) — until every receipt is confirmed.
@@ -31,7 +31,7 @@ flowchart LR
     API --> SVC["Billing service (src/services)"]
     SVC --> DOM["Domain (src/domain)"]
     SVC --> DB["SQLite repository (src/db)"]
-    DB --> FILE[("faro.db")]
+    DB --> FILE[("leaseflow.db")]
 ```
 
 - **`src/domain/`** — pure business rules, zero I/O: `money.ts` (immutable `Money` value object), `contract.ts` (lease entity + due-date algorithm), `charge.ts` (charge aggregate, totals, state machine), `errors.ts` (typed errors that carry HTTP semantics).
@@ -123,7 +123,7 @@ The UI at `/` is the whole operating console: portfolio snapshot KPIs (expected,
 ## Project structure
 
 ```text
-faro/
+leaseflow/
 ├── src/
 │   ├── domain/
 │   │   ├── errors.ts            # DomainValidationError / NotFoundError / ConflictError
@@ -157,7 +157,7 @@ faro/
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `PORT` | `3000` | HTTP port for API + dashboard |
-| `DB_PATH` | `faro.db` | SQLite file path (`:memory:` runs an ephemeral ledger) |
+| `DB_PATH` | `leaseflow.db` | SQLite file path (`:memory:` runs an ephemeral ledger) |
 
 | Script | Command | What it does |
 | --- | --- | --- |

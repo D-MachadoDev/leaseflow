@@ -55,7 +55,7 @@ if (require.main === module) {
   seedIfEmpty(db);
   const port = Number(process.env.PORT) || 3000;
   const server = createApp(db).listen(port, () => {
-    console.log(`Faro ledger API and dashboard on http://localhost:${port}`);
+    console.log(`LeaseFlow ledger API and dashboard on http://localhost:${port}`);
   });
 
   const shutdown = (): void => {

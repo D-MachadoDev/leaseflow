@@ -1,5 +1,5 @@
 {
-  "name": "faro-lease-ledger",
+  "name": "leaseflow",
   "version": "1.0.0",
   "description": "Rental lease billing, partial payment tracking, and receipt reconciliation engine.",
   "main": "dist/server.js",

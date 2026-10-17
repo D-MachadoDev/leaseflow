@@ -1,4 +1,4 @@
-/* Faro — Lease Ledger. Executive ledger console: warm neutrals, one confident
+/* LeaseFlow — Lease Ledger. Executive ledger console: warm neutrals, one confident
    petrol accent, and an urgent tone reserved for overdue money. */
 
 :root {
@@ -778,10 +778,10 @@ td.is-due {
   border-radius: 999px;
   background: linear-gradient(90deg, var(--neutral-soft), color-mix(in srgb, var(--neutral-soft) 40%, transparent), var(--neutral-soft));
   background-size: 200% 100%;
-  animation: faro-shimmer 1.4s ease-in-out infinite;
+  animation: leaseflow-shimmer 1.4s ease-in-out infinite;
 }
 
-@keyframes faro-shimmer {
+@keyframes leaseflow-shimmer {
   from {
     background-position: 140% 0;
   }
@@ -848,7 +848,7 @@ td.is-due {
   border-radius: var(--radius-sm);
   background: var(--surface);
   box-shadow: var(--shadow);
-  animation: faro-toast-in 190ms ease-out;
+  animation: leaseflow-toast-in 190ms ease-out;
 }
 
 .toast--success {
@@ -890,7 +890,7 @@ td.is-due {
   color: var(--ink);
 }
 
-@keyframes faro-toast-in {
+@keyframes leaseflow-toast-in {
   from {
     opacity: 0;
     transform: translateY(0.5rem);

@@ -44,7 +44,7 @@ CREATE INDEX IF NOT EXISTS idx_payments_charge ON payments(charge_id);
  * minor units plus a currency code, so all arithmetic downstream stays exact.
  */
 export function openDatabase(path?: string): DatabaseSync {
-  const dbPath = path ?? process.env.DB_PATH ?? 'faro.db';
+  const dbPath = path ?? process.env.DB_PATH ?? 'leaseflow.db';
   const db = new DatabaseSync(dbPath);
 
   // WAL improves read concurrency for file-backed databases; it is a no-op
